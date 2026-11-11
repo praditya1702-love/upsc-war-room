@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UPSC 2027 Co-Prep War Room v2 | Parul & Aditya</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: #e2e8f0; }
+    .glass { background: rgba(30, 41, 59, 0.65); backdrop-filter: blur(12px); border: 1px solid rgba(148, 163, 184, 0.12); }
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #0f172a; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    input[type="checkbox"] { accent-color: #6366f1; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body class="min-h-screen pb-16">
+
+  <!-- TOP HEADER -->
+  <header class="sticky top-0 z-30 glass border-b border-slate-800 px-4 py-4 md:px-8">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full">UPSC CSE 2027 • v2.0</span>
+          <span class="px-2.5 py-0.5 text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 rounded-full">Multi-Bucket Maths + Custom GS Tags</span>
+        </div>
+        <h1 class="text-xl md:text-2xl font-extrabold text-white mt-1">
+          Parul & Aditya — Synced Strategy & Maths War Room
+        </h1>
+      </div>
+
+      <!-- COUNTDOWN & VIEW FILTER -->
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2 text-center">
+          <div class="text-[10px] uppercase tracking-wider text-slate-400">Prelims (May 23, 2027)</div>
+          <div id="prelimsCountdown" class="text-sm font-bold text-amber-400">-- Days</div>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2 text-center">
+          <div class="text-[10px] uppercase tracking-wider text-slate-400">Mains (Aug 20, 2027)</div>
+          <div id="mainsCountdown" class="text-sm font-bold text-indigo-400">-- Days</div>
+        </div>
+
+        <select id="viewModeSelect" onchange="setViewMode(this.value)" class="bg-slate-800 text-xs font-semibold text-white border border-slate-700 rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-500">
+          <option value="both">👥 Synced Split View (Both)</option>
+          <option value="parul">⚡ Parul Only (Mains Veteran)</option>
+          <option value="aditya">🚀 Aditya Only (Foundation + Job)</option>
+        </select>
+
+        <span id="syncStatus" title="Where your progress is being saved" class="text-xs px-3 py-2.5 rounded-xl font-medium border bg-slate-800 text-slate-300 border-slate-700">💾 Local only</span>
+
+        <button onclick="exportBackup()" title="Export JSON Backup" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-3 py-2.5 rounded-xl font-medium transition">
+          ⬇️ Backup
+        </button>
+      </div>
+    </div>
+
+    <!-- NAVIGATION TABS -->
+    <div class="max-w-7xl mx-auto mt-4 flex gap-2 overflow-x-auto custom-scroll pb-1">
+      <button onclick="switchTab('daily')" id="tab-daily" class="tab-btn px-4 py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white">
+        1. 7-Hr Daily Architecture
+      </button>
+      <button onclick="switchTab('maths')" id="tab-maths" class="tab-btn px-4 py-2 rounded-lg text-xs font-bold transition bg-slate-800/80 text-slate-300 hover:bg-slate-800">
+        2. Maths Optional (Multi-Bucket + Tiers)
+      </button>
+      <button onclick="switchTab('gs')" id="tab-gs" class="tab-btn px-4 py-2 rounded-lg text-xs font-bold transition bg-slate-800/80 text-slate-300 hover:bg-slate-800">
+        3. Interactive GS Tag Roadmap
+      </button>
+      <button onclick="switchTab('notes')" id="tab-notes" class="tab-btn px-4 py-2 rounded-lg text-xs font-bold transition bg-slate-800/80 text-slate-300 hover:bg-slate-800">
+        4. 1-Page GS Micro-Note Builder
+      </button>
+      <button onclick="switchTab('pm')" id="tab-pm" class="tab-btn px-4 py-2 rounded-lg text-xs font-bold transition bg-slate-800/80 text-slate-300 hover:bg-slate-800">
+        5. Parul's PM Sprint & Guardrails
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 md:px-8 mt-6 space-y-6">
+
+    <!-- KPI PROGRESS BAR -->
+    <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="glass rounded-2xl p-4">
+        <div class="flex justify-between text-xs text-slate-400 mb-1">
+          <span>Today's 7-Hr Blocks Done</span>
+          <span id="kpiDailyText" class="font-bold text-white">0 / 10</span>
+        </div>
+        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+          <div id="kpiDailyBar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div class="glass rounded-2xl p-4">
+        <div class="flex justify-between text-xs text-slate-400 mb-1">
+          <span>Parul Maths (Lectures + PYQs)</span>
+          <span id="kpiParulMathsText" class="font-bold text-indigo-300">0%</span>
+        </div>
+        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+          <div id="kpiParulMathsBar" class="bg-indigo-500 h-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div class="glass rounded-2xl p-4">
+        <div class="flex justify-between text-xs text-slate-400 mb-1">
+          <span>Aditya Maths (4 Known + 9 New)</span>
+          <span id="kpiAdityaMathsText" class="font-bold text-cyan-300">0%</span>
+        </div>
+        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+          <div id="kpiAdityaMathsBar" class="bg-cyan-500 h-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div class="glass rounded-2xl p-4">
+        <div class="flex justify-between text-xs text-slate-400 mb-1">
+          <span>GS Subjects Completed</span>
+          <span id="kpiGsDoneText" class="font-bold text-amber-300">0 Tags</span>
+        </div>
+        <div class="text-[11px] text-slate-400 mt-1" id="kpiNotesText">Micro-Notes: 1 / 120 Sheets</div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 1: DAILY 7-HR SCHEDULE ================= -->
+    <section id="section-daily" class="space-y-6">
+      <div class="glass rounded-2xl p-5">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 pb-4 border-b border-slate-800">
+          <div>
+            <h2 class="text-lg font-bold text-white">Weekday 7-Hour Synced Architecture</h2>
+            <p class="text-xs text-slate-400">Same subject blocks for accountability, differentiated execution based on baseline. Morning 3.5 hrs is strictly locked for Mathematics before work/PM prep.</p>
+          </div>
+          <button onclick="resetDailyChecks()" class="self-start md:self-auto text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700">
+            🔄 Reset Today's Checkboxes
+          </button>
+        </div>
+
+        <div id="dailyBlocksContainer" class="mt-4 space-y-3"></div>
+      </div>
+
+      <!-- WEEKEND PROTOCOL -->
+      <div class="glass rounded-2xl p-5">
+        <h3 class="text-base font-bold text-white mb-1">Weekend Consolidation Protocol (The Secret Buffer)</h3>
+        <p class="text-xs text-slate-400 mb-4">Use Saturday & Sunday to absorb weekly Maths backlogs and run timed simulations.</p>
+        <div id="weekendContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 2: MATHS OPTIONAL (13 MODULES) ================= -->
+    <section id="section-maths" class="hidden space-y-6">
+      <!-- HOW TO USE GUIDE -->
+      <div class="glass rounded-2xl p-5 border-l-4 border-l-indigo-500">
+        <h3 class="text-sm font-bold text-white mb-2">🧭 How to Use This Maths War Room & What "Buckets" Mean</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-300">
+          <div class="bg-slate-900/70 p-3 rounded-xl border border-slate-800">
+            <div class="font-bold text-indigo-300 mb-1">1. Multi-Select Diagnostic Buckets (Parul)</div>
+            Click <strong>multiple bucket pills</strong> per topic based on her 2026 Mains experience:
+            <ul class="mt-1 space-y-0.5 text-[11px] text-slate-400">
+              <li>• <strong class="text-rose-300">Bucket A (Concept/Proof Gap):</strong> Re-watch Avinash Sir lectures deeply.</li>
+              <li>• <strong class="text-amber-300">Bucket B (Calc/Sign Error):</strong> Needs timed QCAB margin-box drills.</li>
+              <li>• <strong class="text-purple-300">Bucket C (Selection Trap):</strong> Avoid lengthy traps in Section B.</li>
+              <li>• <strong class="text-emerald-300">Speed / Scaling:</strong> Topic is solid; practice 15-min speed.</li>
+            </ul>
+          </div>
+          <div class="bg-slate-900/70 p-3 rounded-xl border border-slate-800">
+            <div class="font-bold text-cyan-300 mb-1">2. Aditya's Updated 3-Tier Triage</div>
+            Since you already know <strong>Statics & Dynamics, LPP, Numerical Analysis, and Mechanics & Fluid Dynamics</strong> (marked <span class="text-emerald-300 font-semibold">Known Base</span>), you have a massive physics/applied edge! You can toggle any topic's tier anytime:
+            <ul class="mt-1 space-y-0.5 text-[11px] text-slate-400">
+              <li>• <strong class="text-emerald-300">Known Base (4):</strong> Revise notes + jump straight to PYQs.</li>
+              <li>• <strong class="text-cyan-300">Tier 1 Algorithmic (7):</strong> Master 100% via working rules.</li>
+              <li>• <strong class="text-amber-300">Tier 2 Abstract Proofs (2):</strong> Only Modern Algebra & Real Analysis!</li>
+            </ul>
+          </div>
+          <div class="bg-slate-900/70 p-3 rounded-xl border border-slate-800">
+            <div class="font-bold text-amber-300 mb-1">3. Daily Window Workflow</div>
+            Every morning at 6:45 AM:
+            <ul class="mt-1 space-y-0.5 text-[11px] text-slate-400">
+              <li>• Filter to the current Avinash Sir module.</li>
+              <li>• Check Parul's active Bucket tags so she knows what trap to watch out for during the 9:15 AM PYQ drill.</li>
+              <li>• Log specific weak sub-topics or theorem names in the custom note box inside each card.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass rounded-2xl p-5">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+          <div>
+            <h2 class="text-lg font-bold text-white">Mathematics Optional — 13 Modules Interactive Matrix</h2>
+            <p class="text-xs text-slate-400">Click multiple diagnostic buckets for Parul, switch Aditya's Tier classification anytime, and log chapter-specific notes.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <select id="mathsPaperFilter" onchange="renderMaths()" class="bg-slate-800 text-xs text-white border border-slate-700 rounded-lg px-3 py-2">
+              <option value="all">All Papers (13 Topics)</option>
+              <option value="Paper 1">Paper 1 (6 Topics)</option>
+              <option value="Paper 2">Paper 2 (7 Topics)</option>
+              <option value="Known">Aditya's 4 Known Topics</option>
+              <option value="Tier 1">Aditya Tier 1 (Algorithmic)</option>
+              <option value="Tier 2">Aditya Tier 2 (Abstract Proofs)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="mathsContainer" class="mt-4 grid grid-cols-1 gap-4"></div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 3: GS INTERACTIVE TAG ROADMAP ================= -->
+    <section id="section-gs" class="hidden space-y-6">
+      <div class="glass rounded-2xl p-5">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+          <div>
+            <h2 class="text-lg font-bold text-white">User-Configurable GS Multi-Subject Tag Roadmap (Nov 15, 2026 – May 23, 2027)</h2>
+            <p class="text-xs text-slate-400 mt-1">
+              Pre-configured with your exact sequence: <strong>(1) Society + Social Justice → (2) Governance + IR → (3) Ethics + Essay → (4) Internal Security + Agri + DM → (5) Polity → (6) Economy → Buffer → (7) Geography → (8) History → (9) Sci & Tech → (10) Environment → (11) Prelims Lockdown</strong>.
+              <br><span class="text-indigo-300">Click any subject tag to cycle status (⏳ Pending → 🔥 In Progress → ✅ Done), or use "+ Add / Toggle Subjects" to move subjects between phases!</span>
+            </p>
+          </div>
+          <button onclick="resetGsToDefaultOrder()" class="self-start md:self-auto text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg border border-slate-700 whitespace-nowrap">
+            🔄 Reset to Default Tag Order
+          </button>
+        </div>
+
+        <div id="gsRoadmapContainer" class="mt-4 space-y-5"></div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 4: 1-PAGE GS MICRO-NOTE BUILDER ================= -->
+    <section id="section-notes" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Form -->
+        <div class="lg:col-span-1 glass rounded-2xl p-5 space-y-3 h-fit">
+          <h2 class="text-base font-bold text-white">5-Box GS Micro-Note Builder</h2>
+          <p class="text-xs text-slate-400">Strictly 1 page per syllabus micro-theme. Fill and save to your browser vault.</p>
+
+          <div>
+            <label class="text-[11px] font-semibold text-slate-300 uppercase">Paper & Syllabus Topic</label>
+            <input id="noteTitle" type="text" placeholder="e.g., GS-1/2: Urbanization & Smart Cities Governance" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" />
+          </div>
+
+          <div>
+            <label class="text-[11px] font-semibold text-indigo-300 uppercase">1. Definition / Constitutional / Statutory Anchor</label>
+            <textarea id="noteAnchor" rows="2" placeholder="2-line crisp intro, Article number, or statutory body..." class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white"></textarea>
+          </div>
+
+          <div>
+            <label class="text-[11px] font-semibold text-emerald-300 uppercase">2. Hard Data / Reports / Indices (2–3 Stats)</label>
+            <textarea id="noteData" rows="2" placeholder="e.g., UN World Urbanization Prospects, NFHS-5, NITI Aayog report..." class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white"></textarea>
+          </div>
+
+          <div>
+            <label class="text-[11px] font-semibold text-amber-300 uppercase">3. Core Bottlenecks (4–5 Crisp Sub-headings)</label>
+            <textarea id="noteChallenges" rows="3" placeholder="• 74th CAA 3Fs deficit (Funds, Functions, Functionaries)&#10;• Peri-urban slums & feminization of poverty..." class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white"></textarea>
+          </div>
+
+          <div>
+            <label class="text-[11px] font-semibold text-cyan-300 uppercase">4. Committees / SC Rulings / Best Practice Case</label>
+            <textarea id="noteCommittee" rows="2" placeholder="e.g., 2nd ARC 6th Report, Ahluwalia Committee, Indore Municipal Bond model..." class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white"></textarea>
+          </div>
+
+          <div>
+            <label class="text-[11px] font-semibold text-rose-300 uppercase">5. Way Forward Framework (3Es / 4As)</label>
+            <textarea id="noteWayForward" rows="2" placeholder="e.g., Empowered Mayors + Municipal Green Bonds + Transit-Oriented Development." class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white"></textarea>
+          </div>
+
+          <button onclick="saveMicroNote()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-2.5 rounded-xl transition">
+            💾 Save 1-Page Micro-Note
+          </button>
+        </div>
+
+        <!-- Saved Notes List -->
+        <div class="lg:col-span-2 glass rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-white">Saved 1-Page Micro-Notes Vault</h3>
+            <span class="text-xs text-slate-400">Stored locally in your browser</span>
+          </div>
+          <div id="savedNotesContainer" class="space-y-4"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TAB 5: PARUL'S PM SPRINT & BLIND SPOTS ================= -->
+    <section id="section-pm" class="hidden space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="glass rounded-2xl p-5">
+          <span class="px-2.5 py-0.5 text-[10px] font-bold uppercase bg-amber-500/20 text-amber-300 rounded-full">90 Mins / Day Cap</span>
+          <h2 class="text-lg font-bold text-white mt-2">Parul's Product Manager (PM) Sprint Checklist</h2>
+          <p class="text-xs text-slate-400 mb-4">Zero-Bleed Rule: Never do PM prep before the morning 3.5-hr Mathematics block. Leverage Aditya's 3x/week mock feedback.</p>
+          <div id="pmChecklistContainer" class="space-y-2.5"></div>
+        </div>
+
+        <div class="glass rounded-2xl p-5">
+          <span class="px-2.5 py-0.5 text-[10px] font-bold uppercase bg-rose-500/20 text-rose-300 rounded-full">Audit Checklist</span>
+          <h2 class="text-lg font-bold text-white mt-2">6 Strategic Blind Spots & Guardrails</h2>
+          <p class="text-xs text-slate-400 mb-4">Critical guardrails to prevent the Prelims Complacency Trap and April–May Maths Amnesia.</p>
+          <div id="blindSpotsContainer" class="space-y-2.5"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // ==================== CLOUD SYNC SETTINGS (Supabase) ====================
+    // Paste your Supabase Project URL and Publishable key between the quotes below.
+    // Use ONLY the publishable key (starts with sb_publishable_) — never the secret key.
+    // If left as-is, the page still works but saves only in this browser.
+    const SUPABASE_URL = 'https://xglydhwpijgdteglpfaq.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_zxiMPwbVutpSUVB72LTnZw_Ptpydb7Z';
+    const ROOM_ID = 'parul-aditya-2027'; // must match the id used in the Supabase SQL policies
+
+    // ==================== MASTER SUBJECT CATALOG FOR GS ====================
+    const ALL_GS_SUBJECTS = [
+      { id: 'soc', name: 'Indian Society', paper: 'GS-1', color: 'indigo' },
+      { id: 'sj', name: 'Social Justice', paper: 'GS-2', color: 'indigo' },
+      { id: 'gov', name: 'Governance', paper: 'GS-2', color: 'cyan' },
+      { id: 'ir', name: 'International Relations (IR)', paper: 'GS-2', color: 'cyan' },
+      { id: 'sec', name: 'Internal Security', paper: 'GS-3', color: 'emerald' },
+      { id: 'agri', name: 'Agriculture & Food Management', paper: 'GS-3', color: 'emerald' },
+      { id: 'eco', name: 'Indian Economy', paper: 'GS-3 / Prelim', color: 'emerald' },
+      { id: 'dm', name: 'Disaster Management', paper: 'GS-3', color: 'emerald' },
+      { id: 'eth', name: 'Ethics, Integrity & Aptitude', paper: 'GS-4', color: 'amber' },
+      { id: 'ess', name: 'Essay Frameworks & Practice', paper: 'Essay', color: 'amber' },
+      { id: 'geog', name: 'Geography (Physical & Human)', paper: 'GS-1 / Prelim', color: 'rose' },
+      { id: 'pol', name: 'Indian Polity & Constitution', paper: 'GS-2 / Prelim', color: 'rose' },
+      { id: 'hist', name: 'History (Modern, Culture, World)', paper: 'GS-1 / Prelim', color: 'rose' },
+      { id: 'st', name: 'Science & Technology', paper: 'GS-3 / Prelim', color: 'rose' },
+      { id: 'env', name: 'Environment & Biodiversity', paper: 'GS-3 / Prelim', color: 'rose' },
+      { id: 'csat', name: 'CSAT & Prelims PYQ Drills', paper: 'Prelims', color: 'purple' }
+    ];
+
+    const BUCKET_OPTIONS = [
+      { id: 'A_Concept', label: 'Bucket A: Concept Gap', cls: 'bg-rose-500/20 text-rose-300 border-rose-500/40' },
+      { id: 'A_Proof', label: 'Bucket A: Proof/Theorem Gap', cls: 'bg-orange-500/20 text-orange-300 border-orange-500/40' },
+      { id: 'B_Calc', label: 'Bucket B: Calc / Sign Slip', cls: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
+      { id: 'C_Select', label: 'Bucket C: Question Selection Trap', cls: 'bg-purple-500/20 text-purple-300 border-purple-500/40' },
+      { id: 'Speed', label: '⚡ Solid / Speed Scaling', cls: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' }
+    ];
+
+    // ==================== DEFAULT STATE (V2) ====================
+    const DEFAULT_STATE = {
+      viewMode: 'both',
+      dailyBlocks: [
+        {
+          id: 'b1',
+          time: 'Block 1: 06:45 AM – 09:15 AM (2.5 hrs)',
+          title: 'Mathematics Core (Avinash Sir Schedule)',
+          tag: 'Prime Cognitive Window',
+          parulTask: 'Watch familiar modules at 1.25x–1.5x; focus on Bucket A proof conditions, theorem edge-cases & Paper 2 weak spots.',
+          adityaTask: 'On your 4 Known topics (Statics/Dynamics, Mechanics/Fluids, LPP, NA): fast-forward to tough variations. On new topics: watch at 1x & build step-by-step notes.',
+          parulDone: false,
+          adityaDone: false
+        },
+        {
+          id: 'b2',
+          time: 'Block 2: 09:15 AM – 10:15 AM (1.0 hr)',
+          title: 'Mathematics PYQ & Problem Drill',
+          tag: 'Immediate Application',
+          parulTask: 'Timed PYQ Sprint: Solve 4–5 UPSC PYQs inside unruled QCAB margin boxes (8–12 mins/question) + eliminate Bucket B calculation slips.',
+          adityaTask: 'Concept + PYQ Drill: On your 4 Known topics, solve timed PYQs with Parul! On new topics, solve class illustrations & medium PYQs.',
+          parulDone: false,
+          adityaDone: false
+        },
+        {
+          id: 'b_work',
+          time: 'Daytime Window: 10:30 AM – 08:00 PM',
+          title: 'Career / PM Job Prep / Remote PM Work',
+          tag: 'Non-UPSC Block',
+          parulTask: '90-min high-focus PM sprint (Product teardowns, RCA mocks with Aditya, targeted applications). Transitions into full-time PM job.',
+          adityaTask: 'Full-time Remote Product Manager hours (10:30 AM – 8:30 PM) + early dinner at 7:30 PM.',
+          parulDone: false,
+          adityaDone: false
+        },
+        {
+          id: 'b3',
+          time: 'Block 3: Evening Slot 1 (2.0 hrs)',
+          title: 'GS Static Core (Active Phase Tags)',
+          tag: 'High-Yield Output',
+          parulTask: 'Output Mode: 75 mins building 1-page 5-box micro-notes for active Phase tags + 45 mins timed answer writing.',
+          adityaTask: 'Base + Output Mode: 90 mins core study of active Phase tags + 30 mins co-building micro-notes & writing 2 answers.',
+          parulDone: false,
+          adityaDone: false
+        },
+        {
+          id: 'b4',
+          time: 'Block 4: Evening Slot 2 (1.0 hr)',
+          title: 'GS Current Affairs Course',
+          tag: 'Value Addition',
+          parulTask: 'Zero bulky chronological notes—extract only data points, committee names, SC judgments & case studies into syllabus folders.',
+          adityaTask: 'Grasp full conceptual backdrop + Prelims-cum-Mains linkages alongside the CA lecture.',
+          parulDone: false,
+          adityaDone: false
+        },
+        {
+          id: 'b5',
+          time: 'Block 5: Night Wind-Down (0.5 hr)',
+          title: 'Joint Active Recall & Peer Review',
+          tag: 'Synergy Loop',
+          parulTask: '15 mins: Audit GS answers & share structure feedback. 15 mins: Rapid-fire Maths theorem/formula recall.',
+          adityaTask: '15 mins: Compare GS structures & share insights on Mechanics/Fluids/Statics with Parul. 15 mins: Revise Maths formula sheet.',
+          parulDone: false,
+          adityaDone: false
+        }
+      ],
+      weekendBlocks: [
+        { id: 'w1', title: 'Saturday Morning (3 hrs): Weekly Maths Test', desc: 'Solve 8–10 curated PYQs from the week’s Avinash Sir module under strict closed-book exam conditions.', done: false },
+        { id: 'w2', title: 'Saturday Afternoon (3 hrs): GS Phase Tag Consolidation', desc: 'Clear any incomplete 1-page GS theme sheets from the active Phase tags and consolidate CA value-additions.', done: false },
+        { id: 'w3', title: 'Sunday Morning (3 hrs): Alternating Essay / Ethics / Mini-GS Simulation', desc: 'Alt Sunday 1: Write 1 full Essay (90 mins) + peer review. Alt Sunday 2: Timed 10-question GS mini-test on active tags.', done: false },
+        { id: 'w4', title: 'Sunday Evening: Hard Cognitive Off-Switch', desc: 'Complete break from UPSC & PM prep to protect long-term stamina through August 2027.', done: false }
+      ],
+      mathsTopics: [
+        {
+          id: 'm1', paper: 'Paper 1', name: '1. Linear Algebra',
+          adityaTier: 'Tier 1: New Algorithmic', adityaKnows: false,
+          parulBuckets: ['B_Calc', 'Speed'],
+          parulLec: false, parulPyq: false, adityaLec: false, adityaPyq: false,
+          notes: 'Matrix algebra, Eigenvalues, Cayley-Hamilton, Linear transformations. Very scoring; watch row-reduction arithmetic.'
+        },
+        {
+          id: 'm2', paper: 'Paper 1', name: '2. Calculus (Real & Multivariable)',
+          adityaTier: 'Tier 1: New Algorithmic', adityaKnows: false,
+          parulBuckets: ['B_Calc', 'A_Proof'],
+          parulLec: false, parulPyq: false, adityaLec: false, adityaPyq: false,
+          notes: 'Maxima-minima, Lagrange multipliers, Jacobian, Definite & Multiple Integrals.'
+        },
+        {
+          id: 'm3', paper: 'Paper 1', name: '3. Analytic Geometry (3D)',
+          adityaTier: 'Tier 1: New Algorithmic', adityaKnows: false,
+          parulBuckets: ['C_Select', 'B_Calc'],
+          parulLec: false, parulPyq: false, adityaLec: false, adityaPyq: false,
+          notes: 'Planes, straight lines, sphere, cone, cylinder, paraboloid, ellipsoid & generating lines. Repetitive PYQ templates.'
+        },
+        {
+          id: 'm4', paper: 'Paper 1', name: '4. Ordinary Differential Equations (ODE)',
+          adityaTier: 'Tier 1: New Algorithmic', adityaKnows: false,
+          parulBuckets: ['Speed'],
+          parulLec: false, parulPyq: false, adityaLec: false, adityaPyq: false,
+          notes: '1st order non-linear (Clairaut), higher order linear, Variation of Parameters, Laplace transforms. Since Aditya knows Mechanics/Fluids, ODE will feel very natural!'
+        },
+        {
+          id: 'm5', paper: 'Paper 1', name: '5. Statics & Dynamics',
+          adityaTier: 'Known Base (Mastered)', adityaKnows: true,
+          parulBuckets: ['A_Concept', 'C_Select'],
+          parulLec: false, parulPyq: false, adityaLec: true, adityaPyq: false,
+          notes: '🔥 ADITYA KNOWN TOPIC (#1): Common Catenary, Virtual Work, Central Orbits, Projectiles, SHM. Aditya can coach Parul on free-body intuition here!'
+        },
+        {
+          id: 'm6', paper: 'Paper 1', name: '6. Vector Analysis',
+          adityaTier: 'Tier 1: New Algorithmic', adityaKnows: false,
+          parulBuckets: ['B_Calc'],
+          parulLec: false, parulPyq: false, adityaLec: false, adityaPyq: false,
+          notes: 'Gradient, Divergence, Curl, Gauss/Green/Stokes theorems, Frenet-Serret curvature/torsion. Directly links to Fluid Dynamics!'
+        },
+        {
+          id: 'm7', paper: 'Paper 2', name: '7. Modern Algebra (Groups, Rings, Fields)',
+          adityaTier: 'Tier 2: Abstract Proofs', adityaKnows: false,
+          parulBuckets: ['A_Proof', 'C_Select'],
+          parulLec: false, parulPyq: false, adityaLec: false, adityaPyq: false,
+          notes: 'Only pure abstract module #1: Groups, Sylow theorems, Rings, Ideals, Euclidean domains. Build a Theorem & Counter-Example Vault.'
+        },
+        {
+          id: 'm8', paper: 'Paper 2', name: '8. Real Analysis',
+          adityaTier: 'Tier 2: Abstract Proofs', adityaKnows: false,
+          parulBuckets: ['A_Proof', 'B_Calc'],
+          parulLec: false, parulPyq: false, adityaLec: false, adityaPyq: false,
+          notes: 'Only pure abstract module #2: Sequences, Series tests, Uniform Convergence, Riemann Integration, Improper Integrals.'
+        },
+        {
+          id: 'm9', paper: 'Paper 2', name: '9. Complex Analysis',
+          adityaTier: 'Tier 1: New Algorithmic', adityaKnows: false,
+          parulBuckets: ['B_Calc', 'Speed'],
+          parulLec: false, parulPyq: false, adityaLec: false, adityaPyq: false,
+          notes: 'Cauchy-Riemann equations, Analytic functions, Taylor/Laurent series, Singularity, Residue theorem & Contour integration.'
+        },
+        {
+          id: 'm10', paper: 'Paper 2', name: '10. Linear Programming Problems (LPP)',
+          adityaTier: 'Known Base (Mastered)', adityaKnows: true,
+          parulBuckets: ['B_Calc', 'Speed'],
+          parulLec: false, parulPyq: false, adityaLec: true, adityaPyq: false,
+          notes: '🔥 ADITYA KNOWN TOPIC (#2): Simplex, Big-M, Two-Phase, Duality, Transportation & Assignment. Pure speed & zero-slip table practice.'
+        },
+        {
+          id: 'm11', paper: 'Paper 2', name: '11. Partial Differential Equations (PDE)',
+          adityaTier: 'Tier 1: New Algorithmic', adityaKnows: false,
+          parulBuckets: ['B_Calc', 'C_Select'],
+          parulLec: false, parulPyq: false, adityaLec: false, adityaPyq: false,
+          notes: 'Lagrange, Charpit, Monge, Cauchy problem, Canonical forms, Separation of Variables (Heat/Wave/Laplace).'
+        },
+        {
+          id: 'm12', paper: 'Paper 2', name: '12. Numerical Analysis & Computer Programming',
+          adityaTier: 'Known Base (Mastered)', adityaKnows: true,
+          parulBuckets: ['Speed'],
+          parulLec: false, parulPyq: false, adityaLec: true, adityaPyq: false,
+          notes: '🔥 ADITYA KNOWN TOPIC (#3): Newton-Raphson, Regula-Falsi, Gauss-Seidel, Lagrange/Newton Interpolation, Simpson/Weddle, RK-4 + Casio fx-991 loops!'
+        },
+        {
+          id: 'm13', paper: 'Paper 2', name: '13. Mechanics & Fluid Dynamics',
+          adityaTier: 'Known Base (Mastered)', adityaKnows: true,
+          parulBuckets: ['A_Concept', 'B_Calc'],
+          parulLec: false, parulPyq: false, adityaLec: true, adityaPyq: false,
+          notes: '🔥 ADITYA KNOWN TOPIC (#4): Generalized coordinates, Lagrangian, Hamiltonian, 3D Rigid Body, Moment of Inertia, Continuity, Euler, Bernoulli, Vortex & Sources/Sinks.'
+        }
+      ],
+      gsPlanVersion: 'v3-11-phase',
+      customSubjects: [],
+      gsPhases: [
+        {
+          id: 'gs_p1',
+          window: 'Phase 1: Nov 15 – Nov 27, 2026 (13 Days)',
+          title: 'Society (GS-1) + Social Justice (GS-2) Thematic Block',
+          rationale: 'High thematic overlap (Women, Vulnerable Sections, Poverty, Health, Education, Urbanization, Caste/Tribes). Studying them together cuts note-making time and builds rich multidimensional fodder right at the start.',
+          selectedTags: [
+            { id: 'soc', status: 'in_progress' },
+            { id: 'sj', status: 'pending' }
+          ],
+          notes: 'Build unified 1-page sheets for Women, Children, SC/ST/OBC, Minorities, Elderly, Disabled, Health, Education, Poverty, Hunger & Urbanization.'
+        },
+        {
+          id: 'gs_p2',
+          window: 'Phase 2: Nov 28 – Dec 10, 2026 (13 Days)',
+          title: 'Governance + International Relations (GS-2 Completion)',
+          rationale: 'Natural extension of Social Justice. Completes the GS-2 Mains-specific syllabus (Citizen Charters, e-Gov, NGOs, Civil Services, Bilateral/Multilateral IR) alongside the CA course.',
+          selectedTags: [
+            { id: 'gov', status: 'pending' },
+            { id: 'ir', status: 'pending' }
+          ],
+          notes: 'Integrate 2nd ARC recommendations, Transparency/Accountability frameworks, and neighbourhood/global grouping maps.'
+        },
+        {
+          id: 'gs_p3',
+          window: 'Phase 3: Dec 11 – Dec 25, 2026 (15 Days)',
+          title: 'High-Scoring Mains Anchor: Ethics (GS-4) + Essay — Complete',
+          rationale: '500 marks combined. With Society, Social Justice, Governance and IR fresh from Phases 1–2, you already have a large bank of examples to plug into Ethics case studies and Essays.',
+          selectedTags: [
+            { id: 'eth', status: 'pending' },
+            { id: 'ess', status: 'pending' }
+          ],
+          notes: 'Crisp definitions + 2 real-life examples for every GS-4 syllabus keyword, 5 stakeholder case-study templates, and 6 philosophical/thematic Essay outlines.'
+        },
+        {
+          id: 'gs_p4',
+          window: 'Phase 4: Dec 26, 2026 – Jan 10, 2027 (16 Days)',
+          title: 'GS-3 Mains Core: Internal Security + Agriculture + Disaster Management',
+          rationale: 'Mains-heavy, framework-dense GS-3 topics. Finishing them before Polity and Economy leaves the second half of the plan for subjects that serve both Prelims and Mains.',
+          selectedTags: [
+            { id: 'sec', status: 'pending' },
+            { id: 'agri', status: 'pending' },
+            { id: 'dm', status: 'pending' }
+          ],
+          notes: '1-page data/committee sheets for MSP, Food Processing, Supply Chains, LWE, Cyber Security, Border Management, NDMA/Sendai Framework.'
+        },
+        {
+          id: 'gs_p5',
+          window: 'Phase 5: Jan 11 – Jan 25, 2027 (15 Days)',
+          title: 'Indian Polity & Constitution (Prelims + Mains)',
+          rationale: 'Dual-purpose block: static Polity for Prelims plus GS-2 Mains constitutional themes. Builds directly on the Governance work from Phase 2.',
+          selectedTags: [
+            { id: 'pol', status: 'pending' }
+          ],
+          notes: 'Article-wise Prelims revision + 15-year Polity PYQs; Mains sheets on federalism, separation of powers, constitutional bodies and landmark SC judgments.'
+        },
+        {
+          id: 'gs_p6',
+          window: 'Phase 6: Jan 26 – Feb 7, 2027 (13 Days)',
+          title: 'Indian Economy (Prelims + Mains)',
+          rationale: 'Timed to overlap with the Union Budget (Feb 1) and Economic Survey, so fresh data goes straight into your notes.',
+          selectedTags: [
+            { id: 'eco', status: 'pending' }
+          ],
+          notes: 'Prelims concepts (monetary policy, banking, BoP, inflation) + Mains sheets on inclusive growth, budgeting, investment and infrastructure with Budget/Survey data.'
+        },
+        {
+          id: 'gs_buffer',
+          window: 'Buffer: Feb 8 – Feb 10, 2027 (3 Days)',
+          title: '3-Day Buffer — Catch-Up & Consolidation',
+          rationale: 'No new subjects. Clear any backlog from Phases 1–6, finish pending micro-notes, and revise before the second half of the plan.',
+          selectedTags: [],
+          notes: 'List the specific backlog items here before Feb 8.'
+        },
+        {
+          id: 'gs_p7',
+          window: 'Phase 7: Feb 11 – Feb 22, 2027 (12 Days)',
+          title: 'Geography — Physical & Human (Prelims + Mains)',
+          rationale: 'Map-heavy and high-yield for Prelims; GS-1 Mains physical and human geography completed in the same pass.',
+          selectedTags: [
+            { id: 'geog', status: 'pending' }
+          ],
+          notes: 'Daily mapping practice + 15-year Geography PYQs; Mains sheets on resources, industrial location, climatology and geophysical phenomena.'
+        },
+        {
+          id: 'gs_p8',
+          window: 'Phase 8: Feb 23 – Mar 12, 2027 (18 Days)',
+          title: 'History — Modern, Art & Culture, World (Prelims + Mains)',
+          rationale: 'The longest static block, so it gets the most days. Modern History and Culture are both Prelims staples and GS-1 Mains core.',
+          selectedTags: [
+            { id: 'hist', status: 'pending' }
+          ],
+          notes: 'Timelines for Modern India, Art & Culture fact sheets, World History themes, and 15-year History/Culture PYQs.'
+        },
+        {
+          id: 'gs_p9',
+          window: 'Phase 9: Mar 13 – Mar 20, 2027 (8 Days)',
+          title: 'Science & Technology (Prelims + Mains)',
+          rationale: 'Mostly current-affairs driven, so a short focused block works. Covers Prelims S&T and GS-3 Mains tech themes.',
+          selectedTags: [
+            { id: 'st', status: 'pending' }
+          ],
+          notes: 'Space, biotech, defence tech, IT/AI, health tech; link each to a recent CA development.'
+        },
+        {
+          id: 'gs_p10',
+          window: 'Phase 10: Mar 21 – Mar 31, 2027 (11 Days)',
+          title: 'Environment & Biodiversity (Prelims + Mains)',
+          rationale: 'Last block before the Prelims lockdown. Environment carries heavy Prelims weight, so finishing it last keeps it freshest for May.',
+          selectedTags: [
+            { id: 'env', status: 'pending' }
+          ],
+          notes: 'Protected areas, species, conventions & treaties, climate change frameworks, plus 15-year Environment PYQs.'
+        },
+        {
+          id: 'gs_p11',
+          window: 'Phase 11: Apr 1 – May 23, 2027 (53 Days)',
+          title: 'Exclusive Prelims Lockdown + 30-Min Maths Formula Retention',
+          rationale: 'Hard stop on GS Mains answer writing. Full Prelims mock simulation + CSAT speed calibration + 30-min morning Maths formula revision.',
+          selectedTags: [
+            { id: 'csat', status: 'pending' }
+          ],
+          notes: 'Revise the 60-page Consolidated Maths Formula & Theorem Conditions Notebook for 30 mins every morning so Nov–Mar Maths momentum stays intact.'
+        }
+      ],
+      microNotes: [
+        {
+          id: 'n_sample',
+          title: 'GS-1 & GS-2: Women Empowerment & Care Economy [Phase 1 Sample]',
+          anchor: '106th Constitutional Amendment Act (Nari Shakti Vandan Adhiniyam) + Articles 14, 15(3), 39(d), and 42 anchor gender-just development in India.',
+          data: '• Female LFPR rose to 41.7% (PLFS 2023-24), though predominantly in unpaid/rural self-employment.\n• Time Use Survey (NSO): Indian women spend 299 mins/day on unpaid domestic care vs 97 mins by men.',
+          challenges: '• "Motherhood Penalty" & missing middle in formal corporate/STEM workforce\n• Patriarchal asset ownership (less than 14% operational landholdings despite 75% agri-feminization)\n• Safety & mobility bottlenecks in peri-urban transit',
+          committee: '• Justice Verma Committee, Supreme Court Vishaka & Joseph Shine judgments\n• Kudumbashree (Kerala) & Lakhpati Didi SHG micro-enterprise model',
+          wayForward: '• 4Cs Framework: Creche Infrastructure (Palna Scheme), Credit Access (SHG-Bank linkage), Care Economy Monetization, and Corporate Board/Political Representation.'
+        }
+      ],
+      pmChecklist: [
+        { id: 'pm1', text: 'Cap daily PM prep strictly to 90 mins during daytime (never before morning Maths).', done: true },
+        { id: 'pm2', text: 'Tailor 1-page metrics-driven Product Resume + LinkedIn portfolio.', done: false },
+        { id: 'pm3', text: 'Complete 6 Product Teardowns (FinTech, EdTech, Quick Commerce, ONDC) — doubles as GS-3 examples.', done: false },
+        { id: 'pm4', text: 'Practice 3x/week 30-min Mock Interviews (RCA, Product Sense, Guesstimates, PRD) with Aditya.', done: false },
+        { id: 'pm5', text: 'Once hired: Keep morning 6:45–10:15 AM Maths block untouched; slot GS into post-work evening.', done: false }
+      ],
+      blindSpots: [
+        { id: 'bs1', text: '2026 Mains Post-Mortem Completed: Multi-tagged every 2026 Maths topic into Buckets A (Concept/Proof), B (Calc), or C (Selection).', done: false },
+        { id: 'bs2', text: 'Peer Coaching Leveraged: Aditya guides Parul on Statics/Dynamics & Mechanics/Fluids; Parul guides Aditya on Abstract Algebra/Analysis.', done: false },
+        { id: 'bs3', text: 'QCAB Unruled Margin Box Practice: Solving all daily Maths PYQs inside fixed UPSC-sized boxes.', done: false },
+        { id: 'bs4', text: '60-Page Maths Formula & Theorem Conditions Notebook started for April–May Prelims retention.', done: false },
+        { id: 'bs5', text: 'Hard Stop on Mains GS set for April 1, 2027 (Zero Prelims Complacency).', done: false },
+        { id: 'bs6', text: 'Casio fx-991 Scientific Calculator programmed for Numerical Analysis verification.', done: false }
+      ]
+    };
+
+    const STORAGE_KEY = 'upsc_2027_parul_aditya_warroom_v2';
+    let state = loadState();
+    let openTagSelectorPhaseId = null;
+
+    function normalizeState(saved) {
+      const base = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      if (!saved || typeof saved !== 'object') return base;
+      saved = JSON.parse(JSON.stringify(saved));
+      // If the saved GS plan is from an older layout, swap in the new phase plan (other progress is kept)
+      if (saved.gsPlanVersion !== DEFAULT_STATE.gsPlanVersion) {
+        delete saved.gsPhases;
+        saved.gsPlanVersion = DEFAULT_STATE.gsPlanVersion;
+      }
+      return Object.assign(base, saved);
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return normalizeState(raw ? JSON.parse(raw) : null);
+      } catch (e) {
+        return normalizeState(null);
+      }
+    }
+
+    function saveLocal() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.warn('Could not save to localStorage:', e);
+      }
+    }
+
+    function saveState() {
+      saveLocal();
+      updateKPIs();
+      scheduleCloudSave();
+    }
+
+    // Custom GS tags are stored in state so they survive reloads and sync to the other person
+    function syncCustomSubjects() {
+      (state.customSubjects || []).forEach(cs => {
+        if (!ALL_GS_SUBJECTS.some(s => s.id === cs.id)) ALL_GS_SUBJECTS.push(cs);
+      });
+    }
+
+    // ==================== CLOUD SYNC (Supabase) ====================
+    const CLIENT_ID = 'c_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    const CLOUD_CONFIGURED = SUPABASE_URL.startsWith('https://') && !SUPABASE_KEY.startsWith('PASTE_');
+    let sb = null;
+    let cloudReady = false;
+    let cloudSaveTimer = null;
+    let pendingRemoteData = null;
+
+    function setSyncStatus(kind, text) {
+      const el = document.getElementById('syncStatus');
+      if (!el) return;
+      const styles = {
+        ok: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40',
+        saving: 'bg-amber-500/15 text-amber-300 border-amber-500/40',
+        error: 'bg-rose-500/15 text-rose-300 border-rose-500/40',
+        local: 'bg-slate-800 text-slate-300 border-slate-700'
+      };
+      el.className = 'text-xs px-3 py-2.5 rounded-xl font-medium border ' + (styles[kind] || styles.local);
+      el.textContent = text;
+    }
+
+    // viewMode stays per-device, so one person switching to "Parul Only" doesn't change the other's screen
+    function cloudPayload() {
+      const copy = JSON.parse(JSON.stringify(state));
+      delete copy.viewMode;
+      return copy;
+    }
+
+    function scheduleCloudSave() {
+      if (!sb || !cloudReady) return;
+      setSyncStatus('saving', '⏳ Saving…');
+      clearTimeout(cloudSaveTimer);
+      cloudSaveTimer = setTimeout(pushToCloud, 600);
+    }
+
+    async function pushToCloud() {
+      cloudSaveTimer = null;
+      try {
+        const { error } = await sb.from('warroom_state').upsert({
+          id: ROOM_ID,
+          data: cloudPayload(),
+          updated_by: CLIENT_ID,
+          updated_at: new Date().toISOString()
+        });
+        if (error) throw error;
+        setSyncStatus('ok', '☁️ Synced');
+      } catch (e) {
+        console.error('Cloud save failed:', e);
+        setSyncStatus('error', '⚠️ Not synced — saved locally');
+      }
+    }
+
+    function applyRemoteData(data) {
+      const myView = state.viewMode;
+      state = normalizeState(data);
+      state.viewMode = myView;
+      syncCustomSubjects();
+      saveLocal();
+      renderAll();
+    }
+
+    function isTypingInField() {
+      const a = document.activeElement;
+      return !!a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && (a.type === 'text' || a.type === '')));
+    }
+
+    function handleRemoteRow(row) {
+      if (!row || !row.data || row.updated_by === CLIENT_ID) return;
+      if (cloudSaveTimer) return; // a local change is about to be saved; the latest save wins
+      if (isTypingInField()) { pendingRemoteData = row.data; return; } // don't wipe what you're typing
+      applyRemoteData(row.data);
+      setSyncStatus('ok', '☁️ Synced (partner update)');
+    }
+
+    document.addEventListener('focusout', () => {
+      setTimeout(() => {
+        if (!pendingRemoteData || isTypingInField()) return;
+        const data = pendingRemoteData;
+        pendingRemoteData = null;
+        if (!cloudSaveTimer) applyRemoteData(data);
+      }, 50);
+    });
+
+    async function fetchFromCloud() {
+      const { data, error } = await sb.from('warroom_state').select('data, updated_by').eq('id', ROOM_ID).maybeSingle();
+      if (error) throw error;
+      return data;
+    }
+
+    async function initCloud() {
+      if (!CLOUD_CONFIGURED || !window.supabase || !window.supabase.createClient) {
+        setSyncStatus('local', CLOUD_CONFIGURED ? '⚠️ Sync library blocked — local only' : '💾 Local only');
+        return;
+      }
+      try {
+        setSyncStatus('saving', '⏳ Connecting…');
+        sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const row = await fetchFromCloud();
+        cloudReady = true;
+        if (row && row.data) {
+          applyRemoteData(row.data);
+          setSyncStatus('ok', '☁️ Synced');
+        } else {
+          await pushToCloud(); // first ever load: upload this browser's progress as the starting point
+        }
+        sb.channel('warroom-' + ROOM_ID)
+          .on('postgres_changes',
+            { event: '*', schema: 'public', table: 'warroom_state', filter: 'id=eq.' + ROOM_ID },
+            payload => handleRemoteRow(payload.new))
+          .subscribe();
+      } catch (e) {
+        console.error('Supabase connection failed:', e);
+        sb = null;
+        cloudReady = false;
+        setSyncStatus('error', '⚠️ Offline — saving locally');
+      }
+    }
+
+    // Phones often drop the live connection in the background, so re-check when the tab comes back
+    document.addEventListener('visibilitychange', async () => {
+      if (document.visibilityState !== 'visible' || !sb || !cloudReady || cloudSaveTimer || isTypingInField()) return;
+      try {
+        const row = await fetchFromCloud();
+        if (row && row.data && !cloudSaveTimer) applyRemoteData(row.data);
+      } catch (e) { /* keep working locally */ }
+    });
+
+    // ==================== COUNTDOWNS ====================
+    function updateCountdowns() {
+      const now = new Date();
+      const prelims = new Date('2027-05-23T09:30:00');
+      const mains = new Date('2027-08-20T09:00:00');
+      const diffPrelims = Math.max(0, Math.ceil((prelims - now) / (1000 * 60 * 60 * 24)));
+      const diffMains = Math.max(0, Math.ceil((mains - now) / (1000 * 60 * 60 * 24)));
+      document.getElementById('prelimsCountdown').textContent = `${diffPrelims} Days`;
+      document.getElementById('mainsCountdown').textContent = `${diffMains} Days`;
+    }
+
+    // ==================== TABS & VIEW MODE ====================
+    function switchTab(tabName) {
+      ['daily', 'maths', 'gs', 'notes', 'pm'].forEach(t => {
+        document.getElementById(`section-${t}`).classList.toggle('hidden', t !== tabName);
+        const btn = document.getElementById(`tab-${t}`);
+        if (t === tabName) {
+          btn.className = 'tab-btn px-4 py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white';
+        } else {
+          btn.className = 'tab-btn px-4 py-2 rounded-lg text-xs font-bold transition bg-slate-800/80 text-slate-300 hover:bg-slate-800';
+        }
+      });
+    }
+
+    function setViewMode(mode) {
+      state.viewMode = mode;
+      saveState();
+      renderAll();
+    }
+
+    // ==================== RENDER DAILY ====================
+    function renderDaily() {
+      const container = document.getElementById('dailyBlocksContainer');
+      const mode = state.viewMode;
+
+      container.innerHTML = state.dailyBlocks.map((b) => `
+        <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+              <span class="text-xs font-bold text-indigo-400">${b.time}</span>
+              <h4 class="text-sm font-bold text-white">${b.title}</h4>
+            </div>
+            <span class="px-2.5 py-0.5 text-[10px] font-semibold bg-slate-800 text-slate-300 rounded-full border border-slate-700">${b.tag}</span>
+          </div>
+
+          <div class="grid grid-cols-1 ${mode === 'both' ? 'md:grid-cols-2' : ''} gap-3">
+            ${mode !== 'aditya' ? `
+              <label class="flex items-start gap-3 p-3 rounded-lg border ${b.parulDone ? 'bg-indigo-950/30 border-indigo-500/40' : 'bg-slate-950/60 border-slate-800'} cursor-pointer">
+                <input type="checkbox" ${b.parulDone ? 'checked' : ''} onchange="toggleDaily('${b.id}', 'parul')" class="mt-1 w-4 h-4 rounded" />
+                <div class="text-xs">
+                  <div class="font-bold text-indigo-300 mb-0.5">⚡ Parul (Mains Veteran)</div>
+                  <div class="${b.parulDone ? 'line-through text-slate-500' : 'text-slate-300'}">${b.parulTask}</div>
+                </div>
+              </label>
+            ` : ''}
+
+            ${mode !== 'parul' ? `
+              <label class="flex items-start gap-3 p-3 rounded-lg border ${b.adityaDone ? 'bg-cyan-950/30 border-cyan-500/40' : 'bg-slate-950/60 border-slate-800'} cursor-pointer">
+                <input type="checkbox" ${b.adityaDone ? 'checked' : ''} onchange="toggleDaily('${b.id}', 'aditya')" class="mt-1 w-4 h-4 rounded" />
+                <div class="text-xs">
+                  <div class="font-bold text-cyan-300 mb-0.5">🚀 Aditya (4 Known Maths Modules + PM Job)</div>
+                  <div class="${b.adityaDone ? 'line-through text-slate-500' : 'text-slate-300'}">${b.adityaTask}</div>
+                </div>
+              </label>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+
+      const wContainer = document.getElementById('weekendContainer');
+      wContainer.innerHTML = state.weekendBlocks.map(w => `
+        <label class="flex items-start gap-3 p-3.5 rounded-xl border ${w.done ? 'bg-emerald-950/25 border-emerald-500/40' : 'bg-slate-900/80 border-slate-800'} cursor-pointer">
+          <input type="checkbox" ${w.done ? 'checked' : ''} onchange="toggleWeekend('${w.id}')" class="mt-1 w-4 h-4 rounded" />
+          <div class="text-xs">
+            <div class="font-bold text-white">${w.title}</div>
+            <div class="text-slate-400 mt-0.5">${w.desc}</div>
+          </div>
+        </label>
+      `).join('');
+    }
+
+    function toggleDaily(id, person) {
+      const block = state.dailyBlocks.find(b => b.id === id);
+      if (!block) return;
+      if (person === 'parul') block.parulDone = !block.parulDone;
+      if (person === 'aditya') block.adityaDone = !block.adityaDone;
+      saveState();
+      renderDaily();
+    }
+
+    function resetDailyChecks() {
+      // Resets only the person(s) currently shown in the view selector
+      const mode = state.viewMode;
+      state.dailyBlocks.forEach(b => {
+        if (mode !== 'aditya') b.parulDone = false;
+        if (mode !== 'parul') b.adityaDone = false;
+      });
+      if (mode === 'both') state.weekendBlocks.forEach(w => { w.done = false; });
+      saveState();
+      renderDaily();
+    }
+
+    function toggleWeekend(id) {
+      const item = state.weekendBlocks.find(w => w.id === id);
+      if (item) item.done = !item.done;
+      saveState();
+      renderDaily();
+    }
+
+    // ==================== RENDER MATHS (MULTI-BUCKET + UPDATED TIERS) ====================
+    function renderMaths() {
+      const filter = document.getElementById('mathsPaperFilter').value;
+      const mode = state.viewMode;
+      const container = document.getElementById('mathsContainer');
+
+      const filtered = state.mathsTopics.filter(t => {
+        if (filter === 'all') return true;
+        if (filter === 'Paper 1' || filter === 'Paper 2') return t.paper === filter;
+        if (filter === 'Known') return t.adityaKnows;
+        if (filter === 'Tier 1') return t.adityaTier.includes('Tier 1');
+        if (filter === 'Tier 2') return t.adityaTier.includes('Tier 2');
+        return true;
+      });
+
+      container.innerHTML = filtered.map(t => {
+        const tierBadgeColor = t.adityaKnows
+          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+          : (t.adityaTier.includes('Tier 1')
+              ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+              : 'bg-amber-500/20 text-amber-300 border-amber-500/40');
+
+        return `
+        <div class="bg-slate-900/85 border border-slate-800 rounded-xl p-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-800 text-slate-300">${t.paper}</span>
+              <h4 class="text-sm font-bold text-white">${t.name}</h4>
+              <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full border ${tierBadgeColor}">
+                ${t.adityaTier}
+              </span>
+            </div>
+
+            ${mode !== 'parul' ? `
+              <div class="flex items-center gap-3 text-xs">
+                <label class="flex items-center gap-1.5 text-emerald-300 font-semibold cursor-pointer">
+                  <input type="checkbox" ${t.adityaKnows ? 'checked' : ''} onchange="toggleAdityaKnown('${t.id}')" />
+                  <span>In Aditya's Known Topics</span>
+                </label>
+                <select onchange="changeAdityaTier('${t.id}', this.value)" class="bg-slate-800 text-[11px] text-slate-200 border border-slate-700 rounded px-2 py-1">
+                  <option value="Known Base (Mastered)" ${t.adityaTier === 'Known Base (Mastered)' ? 'selected' : ''}>Known Base (Mastered)</option>
+                  <option value="Tier 1: New Algorithmic" ${t.adityaTier === 'Tier 1: New Algorithmic' ? 'selected' : ''}>Tier 1: New Algorithmic</option>
+                  <option value="Tier 2: Abstract Proofs" ${t.adityaTier === 'Tier 2: Abstract Proofs' ? 'selected' : ''}>Tier 2: Abstract Proofs</option>
+                </select>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Editable Topic Note / Strategy -->
+          <div class="mt-2.5 mb-3 flex items-center gap-2">
+            <span class="text-xs">💡</span>
+            <input type="text" value="${escapeHtml(t.notes)}" onchange="updateMathsNote('${t.id}', this.value)"
+              class="w-full bg-slate-950/50 border border-slate-800/80 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500"
+              placeholder="Add custom chapter notes, weak sub-topics, or theorem reminders..." />
+          </div>
+
+          <div class="grid grid-cols-1 ${mode === 'both' ? 'md:grid-cols-2' : ''} gap-3">
+            ${mode !== 'aditya' ? `
+              <div class="p-3 rounded-lg bg-slate-950/70 border border-slate-800/90 space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-indigo-300">⚡ Parul's Multi-Bucket Diagnosis (Click multiple)</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  ${BUCKET_OPTIONS.map(bOpt => {
+                    const active = (t.parulBuckets || []).includes(bOpt.id);
+                    return `
+                      <button onclick="toggleParulBucket('${t.id}', '${bOpt.id}')"
+                        class="px-2.5 py-1 rounded-full text-[11px] font-semibold border transition ${
+                          active ? bOpt.cls + ' ring-1 ring-white/20' : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300'
+                        }">
+                        ${active ? '✓ ' : '+ '}${bOpt.label}
+                      </button>
+                    `;
+                  }).join('')}
+                </div>
+                <div class="flex items-center gap-4 pt-1 border-t border-slate-800/70 text-xs">
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" ${t.parulLec ? 'checked' : ''} onchange="toggleMathsProp('${t.id}', 'parulLec')" />
+                    <span>Avinash Sir Module Done</span>
+                  </label>
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" ${t.parulPyq ? 'checked' : ''} onchange="toggleMathsProp('${t.id}', 'parulPyq')" />
+                    <span>15-Yr Timed PYQs Done</span>
+                  </label>
+                </div>
+              </div>
+            ` : ''}
+
+            ${mode !== 'parul' ? `
+              <div class="p-3 rounded-lg bg-slate-950/70 border border-slate-800/90 flex flex-col justify-between gap-2">
+                <div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-cyan-300">🚀 Aditya's Execution Plan</span>
+                    <span class="text-[11px] font-semibold ${t.adityaKnows ? 'text-emerald-400' : 'text-slate-400'}">
+                      ${t.adityaKnows ? 'Direct PYQ & Speed Mode' : (t.adityaTier.includes('Tier 1') ? '100% Working Rules Mastery' : 'Compulsory 10M + Named Theorems')}
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-slate-400 mt-1">
+                    ${t.adityaKnows
+                      ? 'You already know this module! Skip basic lectures if comfortable, revise your formula sheets, and solve timed PYQs alongside Parul.'
+                      : (t.adityaTier.includes('Tier 1')
+                          ? 'Algorithmic & high-ROI module. Follow Avinash Sir lectures at 1x, write every derivation, and drill 15-yr PYQs.'
+                          : 'Pure abstract proof module. Do not get stuck for days—master standard named theorems, counter-examples & 10-marker archetypes first.')}
+                  </p>
+                </div>
+                <div class="flex items-center gap-4 pt-2 border-t border-slate-800/70 text-xs">
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" ${t.adityaLec ? 'checked' : ''} onchange="toggleMathsProp('${t.id}', 'adityaLec')" />
+                    <span>Concept / Notes Consolidated</span>
+                  </label>
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" ${t.adityaPyq ? 'checked' : ''} onchange="toggleMathsProp('${t.id}', 'adityaPyq')" />
+                    <span>15-Yr PYQ Drill Done</span>
+                  </label>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `}).join('');
+    }
+
+    function toggleParulBucket(topicId, bucketId) {
+      const topic = state.mathsTopics.find(m => m.id === topicId);
+      if (!topic) return;
+      if (!Array.isArray(topic.parulBuckets)) topic.parulBuckets = [];
+      const idx = topic.parulBuckets.indexOf(bucketId);
+      if (idx > -1) {
+        topic.parulBuckets.splice(idx, 1);
+      } else {
+        topic.parulBuckets.push(bucketId);
+      }
+      saveState();
+      renderMaths();
+    }
+
+    function toggleAdityaKnown(topicId) {
+      const topic = state.mathsTopics.find(m => m.id === topicId);
+      if (!topic) return;
+      topic.adityaKnows = !topic.adityaKnows;
+      if (topic.adityaKnows) {
+        topic.adityaTier = 'Known Base (Mastered)';
+      } else {
+        topic.adityaTier = 'Tier 1: New Algorithmic';
+      }
+      saveState();
+      renderMaths();
+    }
+
+    function changeAdityaTier(topicId, newTier) {
+      const topic = state.mathsTopics.find(m => m.id === topicId);
+      if (!topic) return;
+      topic.adityaTier = newTier;
+      topic.adityaKnows = (newTier === 'Known Base (Mastered)');
+      saveState();
+      renderMaths();
+    }
+
+    function updateMathsNote(topicId, val) {
+      const topic = state.mathsTopics.find(m => m.id === topicId);
+      if (topic) topic.notes = val;
+      saveState();
+    }
+
+    function toggleMathsProp(id, prop) {
+      const topic = state.mathsTopics.find(m => m.id === id);
+      if (topic) topic[prop] = !topic[prop];
+      saveState();
+      renderMaths();
+    }
+
+    // ==================== RENDER GS (USER-SELECTED SUBJECT TAGS) ====================
+    function renderGS() {
+      const container = document.getElementById('gsRoadmapContainer');
+
+      container.innerHTML = state.gsPhases.map(phase => {
+        const tags = phase.selectedTags || [];
+        const doneCount = tags.filter(t => t.status === 'done').length;
+        const inProgCount = tags.filter(t => t.status === 'in_progress').length;
+        const pct = tags.length > 0 ? Math.round(((doneCount + inProgCount * 0.5) / tags.length) * 100) : 0;
+        const isSelectorOpen = (openTagSelectorPhaseId === phase.id);
+
+        return `
+          <div class="bg-slate-900/85 border border-slate-800 rounded-2xl p-5 space-y-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+              <div class="flex-1">
+                <input type="text" value="${escapeHtml(phase.window)}" onchange="updatePhaseField('${phase.id}', 'window', this.value)"
+                  class="bg-transparent text-xs font-bold text-amber-400 focus:outline-none focus:underline w-full" />
+                <input type="text" value="${escapeHtml(phase.title)}" onchange="updatePhaseField('${phase.id}', 'title', this.value)"
+                  class="bg-transparent text-base font-bold text-white focus:outline-none focus:underline w-full mt-0.5" />
+                <p class="text-xs text-slate-400 mt-1">${escapeHtml(phase.rationale)}</p>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <div class="text-right">
+                  <div class="text-[10px] uppercase text-slate-400">Phase Completion</div>
+                  <div class="text-sm font-extrabold text-indigo-300">${pct}% (${doneCount}/${tags.length} Tags)</div>
+                </div>
+                <button onclick="toggleTagSelector('${phase.id}')"
+                  class="px-3 py-2 rounded-xl text-xs font-bold border transition ${
+                    isSelectorOpen ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700'
+                  }">
+                  ${isSelectorOpen ? '✕ Close Tag Picker' : '＋ Add / Toggle Subjects'}
+                </button>
+              </div>
+            </div>
+
+            <!-- ACTIVE SUBJECT TAGS IN THIS PHASE -->
+            <div>
+              <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                Selected Subject Tags (Click a tag to cycle: ⏳ Pending → 🔥 In Progress → ✅ Completed)
+              </div>
+              <div class="flex flex-wrap gap-2">
+                ${tags.length === 0 ? `<span class="text-xs text-slate-500 italic">No subjects selected for this phase. Click "+ Add / Toggle Subjects" to pick tags.</span>` : ''}
+                ${tags.map(tagObj => {
+                  const meta = ALL_GS_SUBJECTS.find(s => s.id === tagObj.id) || { name: tagObj.id, paper: 'Custom' };
+                  let badgeStyle = 'bg-slate-800/90 text-slate-300 border-slate-700';
+                  let statusIcon = '⏳ Pending';
+                  if (tagObj.status === 'in_progress') {
+                    badgeStyle = 'bg-amber-500/20 text-amber-200 border-amber-500/50 ring-1 ring-amber-400/30';
+                    statusIcon = '🔥 In Progress';
+                  } else if (tagObj.status === 'done') {
+                    badgeStyle = 'bg-emerald-500/20 text-emerald-200 border-emerald-500/50';
+                    statusIcon = '✅ Done';
+                  }
+
+                  return `
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition ${badgeStyle}">
+                      <button onclick="cycleTagStatus('${phase.id}', '${tagObj.id}')" class="flex items-center gap-1.5 text-left">
+                        <span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-black/30 text-white">${escapeHtml(meta.paper)}</span>
+                        <span>${escapeHtml(meta.name)}</span>
+                        <span class="text-[10px] opacity-85 ml-1">(${statusIcon})</span>
+                      </button>
+                      <button onclick="removeTagFromPhase('${phase.id}', '${tagObj.id}')" title="Remove subject from this phase" class="text-slate-400 hover:text-rose-400 ml-1 font-bold">×</button>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+
+            <!-- MULTI-SELECT SUBJECT PICKER DRAWER -->
+            ${isSelectorOpen ? `
+              <div class="p-4 rounded-xl bg-slate-950/90 border border-indigo-500/40 space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-indigo-300">Select or Deselect Multiple GS Subjects for this Phase:</span>
+                  <div class="flex gap-2">
+                    <input type="text" id="customSubjInput_${phase.id}" placeholder="Or type custom topic tag..." class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white" />
+                    <button onclick="addCustomTagToPhase('${phase.id}')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-lg">+ Add Custom</button>
+                  </div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  ${ALL_GS_SUBJECTS.map(subj => {
+                    const isSelected = tags.some(t => t.id === subj.id);
+                    return `
+                      <button onclick="toggleSubjectInPhase('${phase.id}', '${subj.id}')"
+                        class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
+                          isSelected
+                            ? 'bg-indigo-600/30 text-indigo-200 border-indigo-400 ring-1 ring-indigo-400/30'
+                            : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                        }">
+                        ${isSelected ? '✓ ' : '+ '}[${subj.paper}] ${subj.name}
+                      </button>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            ` : ''}
+
+            <!-- EDITABLE DELIVERABLES / FOCUS FOR THIS PHASE -->
+            <div class="pt-2 border-t border-slate-800/70 flex items-center gap-2">
+              <span class="text-xs font-bold text-slate-400 whitespace-nowrap">📌 Deliverables:</span>
+              <input type="text" value="${escapeHtml(phase.notes || '')}" onchange="updatePhaseField('${phase.id}', 'notes', this.value)"
+                class="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500"
+                placeholder="Write your target micro-notes & answer-writing deliverables for these tags..." />
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleTagSelector(phaseId) {
+      openTagSelectorPhaseId = (openTagSelectorPhaseId === phaseId) ? null : phaseId;
+      renderGS();
+    }
+
+    function toggleSubjectInPhase(phaseId, subjId) {
+      const phase = state.gsPhases.find(p => p.id === phaseId);
+      if (!phase) return;
+      if (!Array.isArray(phase.selectedTags)) phase.selectedTags = [];
+      const idx = phase.selectedTags.findIndex(t => t.id === subjId);
+      if (idx > -1) {
+        phase.selectedTags.splice(idx, 1);
+      } else {
+        phase.selectedTags.push({ id: subjId, status: 'pending' });
+      }
+      saveState();
+      renderGS();
+    }
+
+    function addCustomTagToPhase(phaseId) {
+      const input = document.getElementById(`customSubjInput_${phaseId}`);
+      if (!input || !input.value.trim()) return;
+      const customName = input.value.trim();
+      const customId = 'custom_' + customName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const customSubj = { id: customId, name: customName, paper: 'Custom', color: 'indigo' };
+      if (!ALL_GS_SUBJECTS.some(s => s.id === customId)) ALL_GS_SUBJECTS.push(customSubj);
+      if (!Array.isArray(state.customSubjects)) state.customSubjects = [];
+      if (!state.customSubjects.some(s => s.id === customId)) state.customSubjects.push(customSubj);
+      const phase = state.gsPhases.find(p => p.id === phaseId);
+      if (phase && !phase.selectedTags.some(t => t.id === customId)) {
+        phase.selectedTags.push({ id: customId, status: 'pending' });
+      }
+      input.value = '';
+      saveState();
+      renderGS();
+    }
+
+    function cycleTagStatus(phaseId, tagId) {
+      const phase = state.gsPhases.find(p => p.id === phaseId);
+      if (!phase) return;
+      const tag = phase.selectedTags.find(t => t.id === tagId);
+      if (!tag) return;
+      const order = ['pending', 'in_progress', 'done'];
+      const nextIdx = (order.indexOf(tag.status) + 1) % order.length;
+      tag.status = order[nextIdx];
+      saveState();
+      renderGS();
+    }
+
+    function removeTagFromPhase(phaseId, tagId) {
+      const phase = state.gsPhases.find(p => p.id === phaseId);
+      if (!phase) return;
+      phase.selectedTags = phase.selectedTags.filter(t => t.id !== tagId);
+      saveState();
+      renderGS();
+    }
+
+    function updatePhaseField(phaseId, field, value) {
+      const phase = state.gsPhases.find(p => p.id === phaseId);
+      if (phase) phase[field] = value;
+      saveState();
+    }
+
+    function resetGsToDefaultOrder() {
+      state.gsPhases = JSON.parse(JSON.stringify(DEFAULT_STATE.gsPhases));
+      saveState();
+      renderGS();
+    }
+
+    // ==================== RENDER MICRO-NOTES ====================
+    function renderMicroNotes() {
+      const container = document.getElementById('savedNotesContainer');
+      if (state.microNotes.length === 0) {
+        container.innerHTML = `<div class="text-xs text-slate-500 p-6 text-center border border-dashed border-slate-800 rounded-xl">No micro-notes saved yet. Use the 5-Box builder on the left to add your first 1-page sheet.</div>`;
+        return;
+      }
+
+      container.innerHTML = state.microNotes.map(n => `
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-2.5">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <h4 class="text-sm font-bold text-white">${escapeHtml(n.title)}</h4>
+            <button onclick="deleteMicroNote('${n.id}')" class="text-xs text-rose-400 hover:text-rose-300">🗑️ Delete</button>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
+            <div class="p-2.5 rounded bg-slate-950/70 border border-slate-800/80">
+              <div class="font-bold text-indigo-300 mb-0.5">1. Constitutional / Statutory Anchor</div>
+              <div class="text-slate-300 whitespace-pre-line">${escapeHtml(n.anchor)}</div>
+            </div>
+            <div class="p-2.5 rounded bg-slate-950/70 border border-slate-800/80">
+              <div class="font-bold text-emerald-300 mb-0.5">2. Hard Data / Indices</div>
+              <div class="text-slate-300 whitespace-pre-line">${escapeHtml(n.data)}</div>
+            </div>
+            <div class="p-2.5 rounded bg-slate-950/70 border border-slate-800/80">
+              <div class="font-bold text-amber-300 mb-0.5">3. Core Bottlenecks</div>
+              <div class="text-slate-300 whitespace-pre-line">${escapeHtml(n.challenges)}</div>
+            </div>
+            <div class="p-2.5 rounded bg-slate-950/70 border border-slate-800/80">
+              <div class="font-bold text-cyan-300 mb-0.5">4. Committees / SC / Case Studies</div>
+              <div class="text-slate-300 whitespace-pre-line">${escapeHtml(n.committee)}</div>
+            </div>
+          </div>
+          <div class="p-2.5 rounded bg-slate-950/70 border border-slate-800/80 text-xs">
+            <div class="font-bold text-rose-300 mb-0.5">5. Way Forward Framework</div>
+            <div class="text-slate-300 whitespace-pre-line">${escapeHtml(n.wayForward)}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function saveMicroNote() {
+      const title = document.getElementById('noteTitle').value.trim();
+      if (!title) { alert('Please enter a Paper & Syllabus Topic title.'); return; }
+      const newNote = {
+        id: 'n_' + Date.now(),
+        title,
+        anchor: document.getElementById('noteAnchor').value.trim(),
+        data: document.getElementById('noteData').value.trim(),
+        challenges: document.getElementById('noteChallenges').value.trim(),
+        committee: document.getElementById('noteCommittee').value.trim(),
+        wayForward: document.getElementById('noteWayForward').value.trim()
+      };
+      state.microNotes.unshift(newNote);
+      ['noteTitle', 'noteAnchor', 'noteData', 'noteChallenges', 'noteCommittee', 'noteWayForward'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      saveState();
+      renderMicroNotes();
+    }
+
+    function deleteMicroNote(id) {
+      state.microNotes = state.microNotes.filter(n => n.id !== id);
+      saveState();
+      renderMicroNotes();
+    }
+
+    // ==================== RENDER PM & BLIND SPOTS ====================
+    function renderPMAndBlindSpots() {
+      document.getElementById('pmChecklistContainer').innerHTML = state.pmChecklist.map(item => `
+        <label class="flex items-start gap-3 p-3 rounded-xl border ${item.done ? 'bg-amber-950/20 border-amber-500/40' : 'bg-slate-900/80 border-slate-800'} cursor-pointer text-xs">
+          <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleSimpleList('pmChecklist', '${item.id}')" class="mt-0.5 w-4 h-4 rounded" />
+          <span class="${item.done ? 'line-through text-slate-500' : 'text-slate-200'}">${item.text}</span>
+        </label>
+      `).join('');
+
+      document.getElementById('blindSpotsContainer').innerHTML = state.blindSpots.map(item => `
+        <label class="flex items-start gap-3 p-3 rounded-xl border ${item.done ? 'bg-emerald-950/20 border-emerald-500/40' : 'bg-slate-900/80 border-slate-800'} cursor-pointer text-xs">
+          <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleSimpleList('blindSpots', '${item.id}')" class="mt-0.5 w-4 h-4 rounded" />
+          <span class="${item.done ? 'line-through text-slate-500' : 'text-slate-200'}">${item.text}</span>
+        </label>
+      `).join('');
+    }
+
+    function toggleSimpleList(listKey, id) {
+      const item = state[listKey].find(x => x.id === id);
+      if (item) item.done = !item.done;
+      saveState();
+      renderPMAndBlindSpots();
+    }
+
+    // ==================== KPI UPDATES & HELPERS ====================
+    function updateKPIs() {
+      const studyBlocks = state.dailyBlocks.filter(b => b.id !== 'b_work');
+      const doneDaily = studyBlocks.reduce((acc, b) => acc + (b.parulDone ? 1 : 0) + (b.adityaDone ? 1 : 0), 0);
+      const totalDaily = studyBlocks.length * 2;
+      document.getElementById('kpiDailyText').textContent = `${doneDaily} / ${totalDaily}`;
+      document.getElementById('kpiDailyBar').style.width = `${Math.round((doneDaily / totalDaily) * 100)}%`;
+
+      const parulMathsDone = state.mathsTopics.reduce((acc, t) => acc + (t.parulLec ? 1 : 0) + (t.parulPyq ? 1 : 0), 0);
+      const parulPct = Math.round((parulMathsDone / (state.mathsTopics.length * 2)) * 100);
+      document.getElementById('kpiParulMathsText').textContent = `${parulPct}%`;
+      document.getElementById('kpiParulMathsBar').style.width = `${parulPct}%`;
+
+      const adityaMathsDone = state.mathsTopics.reduce((acc, t) => acc + (t.adityaLec ? 1 : 0) + (t.adityaPyq ? 1 : 0), 0);
+      const adityaPct = Math.round((adityaMathsDone / (state.mathsTopics.length * 2)) * 100);
+      document.getElementById('kpiAdityaMathsText').textContent = `${adityaPct}%`;
+      document.getElementById('kpiAdityaMathsBar').style.width = `${adityaPct}%`;
+
+      // GS Tags KPI
+      let totalTags = 0;
+      let doneTags = 0;
+      state.gsPhases.forEach(p => {
+        (p.selectedTags || []).forEach(t => {
+          totalTags++;
+          if (t.status === 'done') doneTags++;
+        });
+      });
+      document.getElementById('kpiGsDoneText').textContent = `${doneTags} / ${totalTags} Tags Done`;
+      document.getElementById('kpiNotesText').textContent = `Micro-Notes: ${state.microNotes.length} / 120 Sheets`;
+    }
+
+    function exportBackup() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute("href", dataStr);
+      dlAnchor.setAttribute("download", "upsc_2027_parul_aditya_backup_v2.json");
+      document.body.appendChild(dlAnchor);
+      dlAnchor.click();
+      dlAnchor.remove();
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function renderAll() {
+      document.getElementById('viewModeSelect').value = state.viewMode || 'both';
+      updateCountdowns();
+      renderDaily();
+      renderMaths();
+      renderGS();
+      renderMicroNotes();
+      renderPMAndBlindSpots();
+      updateKPIs();
+    }
+
+    syncCustomSubjects();
+    renderAll();
+    initCloud();
+  </script>
+</body>
+</html>
